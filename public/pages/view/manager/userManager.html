@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>医生管理</title>
+		<link rel="stylesheet" href="../../component/pear/css/pear.css" />
+		<link rel="stylesheet" href="../../component/element-ui/index.css">
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="pear-container">
+		<div v-cloak class="layui-card" id="app">
+			<el-container>
+				<el-header class="main-view" height="10vh">
+					<el-form :inline="true"  class="demo-form-inline">
+						<el-form-item label="用户名">
+							<el-input v-model="nickName" placeholder="用户名"></el-input>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" @click="onSubmit">查询</el-button>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="success" @click="addData">新增</el-button>
+						</el-form-item>
+					</el-form>
+
+
+				</el-header>
+				
+				
+				<el-main class="main-view" style="min-height: 87vh;">
+
+					<el-table :data="tableData" style="width: 100%">
+						<el-table-column prop="uid" label="ID" width="100">
+						</el-table-column>
+						<el-table-column prop="nickName" label="用户名" width="150">
+						</el-table-column>
+						<el-table-column prop="realName" label="姓名" width="150">
+						</el-table-column>
+						<el-table-column prop="age" label="年龄" width="150">
+						</el-table-column>
+						<el-table-column prop="sex" label="性别" width="150">
+							<template slot-scope="scope">
+								<div>{{scope.row.sex == 1 ?"男" : "女" }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="sub" label="科室" width="150">
+							<template slot-scope="scope">
+								<div>{{ scope.row.nmHospSub ? scope.row.nmHospSub.groupName : "/" }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="type" label="类型" width="120">
+							<template slot-scope="scope">
+								<div>{{scope.row.type == 3 ?"患者" : (scope.row.type == 2 ?"医生":"管理员") }}</div>
+							</template>
+						</el-table-column>
+
+						<el-table-column
+								fixed="right"
+								label="操作">
+							<template slot-scope="scope">
+								<el-button @click="showData(scope.row)" type="text" size="small">编辑</el-button>
+								<el-button v-if="scope.row.type!=1" @click="delData(scope.row)" type="text" size="small">删除</el-button>
+							</template>
+						</el-table-column>
+					</el-table>
+					
+				</el-main>
+			</el-container>
+
+			<el-dialog v-if="dataView.validFlag" title="用户信息" :visible.sync="show">
+				<el-form :model="dataView">
+					<el-form-item label="用户名" >
+						<el-input v-model="dataView.nickName" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="真实姓名" >
+						<el-input v-model="dataView.realName" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="性别">
+						<el-select style="width:100%" v-model="dataView.sex" clearable filterable placeholder="请选择">
+							<el-option label="男"
+									   value="1">
+							</el-option>
+							<el-option label="女"
+									   value="0">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="用户类型">
+						<el-select style="width:100%" v-model="dataView.type" clearable filterable placeholder="请选择科室">
+							<el-option label="医生"
+									:value="parseInt('2')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item v-if="dataView.type == 2" label="职称">
+						<el-select style="width:100%" v-model="dataView.job" clearable filterable placeholder="请选择">
+							<el-option label="医师"
+									   value="医师">
+							</el-option>
+							<el-option label="主任医师"
+									   value="主任医师">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item v-if="dataView.type == 2" label="排班坐诊时间">
+						<el-time-picker style="width:100%"
+								is-range
+								format="HH:mm"
+								selectableRange="00:00 - 23:59"
+								v-model="dataView.workTime"
+								range-separator="至"
+								start-placeholder="开始时间"
+								end-placeholder="结束时间"
+								placeholder="选择时间范围">
+						</el-time-picker>
+					</el-form-item>
+
+					<el-form-item v-if="dataView.type == 2" label="科室名">
+						<el-select style="width:100%" v-model="dataView.sub" clearable filterable placeholder="请选择科室">
+							<el-option
+									v-for="item in typeList"
+									:key="item.groupName"
+									:label="item.groupName"
+									:value="item.id">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="年龄" >
+						<el-input v-model="dataView.age" type="number" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="简介" >
+						<el-input v-model="dataView.memo" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label-position="left" label="照片" label-width="120px">
+						<div style="display: flex;justify-content: flex-start;">
+							<div style="margin-right: 50px;">
+								<el-image :preview-src-list="[getPicUrl(dataView.pic)]" :src="getPicUrl(dataView.pic)" style="width: 100px; height: 100px;box-shadow: 1px 1px 5px rgba(0,0,0,0.1)">
+									<div slot="error" class="image-slot">
+										<i class="el-icon-picture-outline" style="font-size: 100px;"></i>
+									</div>
+								</el-image>
+								<div style="display: flex;justify-content: space-between;">
+									<div style="text-align: center;">证件照</div>
+									<div @click="editPic(dataView,'')" style="text-align: center;color: #63a35c;">修改</div>
+								</div>
+
+							</div>
+						</div>
+					</el-form-item>
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="show = false">取 消</el-button>
+					<el-button type="primary" @click="editData">确 定</el-button>
+				</div>
+			</el-dialog>
+
+		</div>
+
+		<script src="../../component/vue/vue.js"></script>
+		<script src="../../component/element-ui/index.js"></script>
+		<script src="../../component/axios/axios.min.js"></script>
+		<script type="module">
+			import common from "../../component/common/commonData.js";
+			
+			var app = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						name: "",
+                        nickName: "",
+						show:false,
+						dataView:{},
+						tableData: [],
+						userInfo:{},
+						typeList:[],
+						value1: [new Date(2023, 0, 0, 23, 59), new Date(2023, 0, 0, 23, 59)]
+					};
+				},
+				mounted() {
+
+				},
+				methods: {
+					onShow() {
+
+					}, onLoad() {
+						this.user = common.getUserInfo();
+						if (!this.user) {
+							location.href = '/'
+						}
+						this.getData();
+						this.getSubList();
+					}, onSubmit() {
+
+						this.getData();
+
+					}, getData() {
+
+						let _this = this;
+						common.request({
+							loading: false,
+							url: common.urlMap.findSysUserList,
+							data: {
+								validFlag: 1,
+								type: 2,
+								nickName: this.nickName
+							},
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.data) {
+										_this.tableData = res.data.data;
+										_this.tableData.map(function(item,index){
+											if(item){
+												var info = item.workTime.split("-");
+												item.workTime = [new Date("2023-01-01 "+info[0]), new Date("2023-01-01 "+info[1])];
+											}
+
+										});
+
+
+									}
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+
+					}, getSubList() {
+						var _this = this;
+						common.request({
+							data: {validFlag:1},
+							url: common.urlMap.findNmHospSubList,
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.code == 200) {
+										_this.typeList = res.data.data;
+									} else {
+										common.err(res.data.msg);
+									}
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						});
+
+					}, editData() {
+						let _this = this;
+						if (this.dataView.uid && !this.dataView.validFlag) {
+							//删除
+						} else {
+							if (!this.dataView.realName) {
+								common.msg("请填写完整");
+								return;
+							}
+							if(this.dataView.workTime){
+
+								this.dataView.workTime = new Date(this.dataView.workTime[0]).Format("hh:mm")+"-"+new Date(this.dataView.workTime[1]).Format("hh:mm");
+							}
+						}
+						let url = _this.dataView.uid ? common.urlMap.editSysUser : common.urlMap.addSysUser;
+						common.request({
+							url: url,
+							data: _this.dataView,
+							success: function (res) {
+								if (res.data.code == 200) {
+									common.success(res.data.msg)
+									_this.show = false;
+									_this.getData();
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+
+					}, showData(row) {
+						this.dataView = row;
+						this.show = true;
+					}, delData(row) {
+						this.dataView = {
+							uid:row.uid,
+							validFlag:0
+						}
+						this.editData();
+					},addData(){
+						this.show = true;
+						this.dataView = {
+							type:2,
+							validFlag:1,
+							pic:""
+						}
+
+					},getPicUrl(pic){
+				if(pic.length<100){
+					return common.urlMap.getPic+pic;
+				}else{
+					return pic;
+				}
+			},editPic(data,index){
+				this.createInput(index);
+			},
+			createInput(index){
+				let _this = this;
+				var input = document.createElement('input');
+				input.type = 'file';
+				input.setAttribute("accept", "image/*,.png,.jpg,.jpeg,.bmp"); //仅能选择图片
+				input.id = "hidden-input-file";
+				input.style.display = "none";
+				input.onchange = function() {
+					var file = this.files[0];
+					var reader = new FileReader();
+					reader.readAsDataURL(file);
+					reader.onload = function(e) {
+						var data = e.target.result;
+
+						function dealImage(base64, w, size, callback,quality){
+							var newImage = new Image();
+							var picSize = base64.length / 1024;
+							quality = quality || 0.85; //压缩系数0-1之间
+							size = size || 512;
+							//根据图片大小调整压缩比
+							if(picSize<size/3){
+								callback(base64);
+								return;
+							}else if(picSize>6144){
+								quality = 0.7;
+							}
+							newImage.src = base64;
+							newImage.setAttribute("crossOrigin", 'Anonymous'); //url为外域时需要
+							var imgWidth, imgHeight;
+							newImage.onload = function() {
+								imgWidth = this.width;
+								imgHeight = this.height;
+								var canvas = document.createElement("canvas");
+								var ctx = canvas.getContext("2d");
+								if (Math.max(imgWidth, imgHeight) > w) {
+									if (imgWidth > imgHeight) {
+										canvas.width = w;
+										canvas.height = w * imgHeight / imgWidth;
+									} else {
+										canvas.height = w;
+										canvas.width = w * imgWidth / imgHeight;
+									}
+								} else {
+									canvas.width = imgWidth;
+									canvas.height = imgHeight;
+								}
+								ctx.clearRect(0, 0, canvas.width, canvas.height);
+								ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
+								var base64 = canvas.toDataURL("image/jpeg", quality); //绘制压缩,修改格式需注意，png格式不能用此方式压缩
+								// 如想确保图片压缩到自己想要的尺寸,如要求在50-150kb之间，请加以下语句，quality初始值根据情况自定
+								while (base64.length / 1024 > size) {
+									quality -= 0.05;
+									base64 = canvas.toDataURL("image/jpeg", quality);
+								}
+								callback(base64); //必须通过回调函数返回，否则无法及时拿到该值
+							}
+						}
+
+						dealImage(data, 1440, 1560, function(base64) {
+							_this.dataView['pic'] = base64;
+							_this.$forceUpdate();
+						})
+
+					};
+				};
+				input.click();
+			}
+				}
+			});
+			
+			window.onpageshow = app.onShow();
+			window.onload = app.onLoad();
+			Date.prototype.Format =  function (fmt) {  // author: meizz
+				var o = {
+					"M+":  this.getMonth() + 1,  // 月份
+					"d+":  this.getDate(),  // 日
+					"h+":  this.getHours(),  // 小时
+					"m+":  this.getMinutes(),  // 分
+					"s+":  this.getSeconds(),  // 秒
+					"q+": Math.floor(( this.getMonth() + 3) / 3),  // 季度
+					"S":  this.getMilliseconds()  // 毫秒
+				};
+				if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, ( this.getFullYear() + "").substr(4 - RegExp.$1.length));
+				for ( var k  in o)
+					if ( new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+				return fmt;
+			}
+
+		</script>
+		
+		<style>
+			.main-view {
+				padding: 10px;
+			}
+		</style>
+	</body>
+
+</html>

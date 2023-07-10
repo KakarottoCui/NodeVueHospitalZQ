@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>个人中心</title>
+		<link rel="stylesheet" href="../../component/pear/css/pear.css" />
+		<link rel="stylesheet" href="../../component/element-ui/index.css">
+		<link rel="stylesheet" href="../../component/common/css/nmMain.css">
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="pear-container">
+		<div v-cloak class="layui-card padding-20" id="app" style="min-height: calc( 100vh - 40px );">
+			<div class="padding-10" style="background-color: #2d8cf0;color: white;">
+				<el-page-header  @back="goBack" content="个人中心" ></el-page-header>
+			</div>
+			<div>
+				<div class="v-flex v-r-between padding-10 margin-t view-shadow margin-b">
+					<div class="v-flex v-r-left">
+						<el-avatar :src="'/public/logo.png'"></el-avatar>
+						<div>
+							<div v-if="user" class="text-shadow text-blue" style="padding-left: 15px;">{{user.nickName}}</div>
+							<div v-if="user" class="text-shadow text-green text-12" style="padding-left: 15px;">{{ getUserType(user.type) }}</div>
+						</div>
+					</div>
+<!--					<div style="line-height: 40px;">-->
+<!--						<div v-if="user.type==2" @click="toBookManager" class="text-shadow text-blue text-15 hover-green" >作品管理</div>-->
+<!--					</div>-->
+<!--					<div style="line-height: 40px;">-->
+<!--						<div v-if="user.type==1" @click="toManager" class="text-shadow text-blue text-15 hover-green" >管理中心</div>-->
+<!--					</div>-->
+<!--					<div style="line-height: 40px;">-->
+<!--						<div v-if="user.type==3 && userItem.allHis.length>9" class="text-shadow text-gray text-12" >已听书满10次，待管理员审核为作者</div>-->
+<!--					</div>-->
+				</div>
+			</div>
+			<el-row :gutter="20" style="padding-top: 15px;margin-top: 10px;">
+				<el-col :span="12" style="border-right: #2d8cf0 1px solid;min-height: calc( 100vh - 150px );">
+					<div class=" text-bold text-blue padding-15">
+						我的病例
+					</div>
+					<div>
+						<div v-if="orderList.length == 0" class="text-ellipsis text-gray padding-15" >无数据</div>
+						<div v-for="item in orderList" class="margin-10  v-flex margin-b v-r-between view-shadow view-radius-m padding-15">
+							<div>
+								<div>
+
+									<span class=" padding-b">{{item.user.realName + '('+getState(item.state)+')'}}</span>
+								</div>
+								<div>
+									<span class="text-gray padding-b">{{item.nmHospSub.groupName}}</span>
+									<span class="text-gray margin-l ">{{item.docter.realName}}-{{item.docter.job}}</span>
+								</div>
+							</div>
+							<div  class="text-ellipsis text-gray">
+								<div>预约时间：{{item.orderTime}}</div>
+								<div @click="getOrder(item.id)" class="text-blue" style="width: 100%;text-align: right;">详情 ></div>
+							</div>
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="12" style="min-height: calc( 100vh - 150px );">
+					<div class="text-bold text-blue padding-15">
+						我的就诊人 <span @click="addData()" class="text-green padding-b margin-l">新增就诊人</span>
+					</div>
+					<div>
+							<div v-for="item in userList" class="margin-10  v-flex margin-b v-r-between view-shadow view-radius-m padding-15">
+								<div>
+									<div>
+										<span class=" padding-b">{{item.realName}}</span>
+									</div>
+									<div>
+										<span class="text-gray padding-b">{{item.sex == 1?'男':'女'}}</span>
+										<span class="text-gray margin-l ">{{item.age+'岁'}}</span>
+									</div>
+								</div>
+								<div  class="text-ellipsis text-gray">
+									<div>添加时间：{{item.createTime}}</div>
+									<div class="text-blue" style="width: 100%;text-align: right;">
+										<span @click="showData(item)" class="text-blue padding-b">修改</span>
+										<span @click="delData(item)" class="text-red padding-b">删除</span>
+									</div>
+								</div>
+							</div>
+					</div>
+				</el-col>
+			</el-row>
+
+
+			<el-dialog title="用户信息" :visible.sync="show">
+				<el-form :model="dataView">
+
+					<el-form-item label="真实姓名" >
+						<el-input v-model="dataView.realName" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="性别">
+						<el-select v-model="dataView.sex" clearable filterable placeholder="请选择">
+							<el-option label="男"
+									   value=1>
+							</el-option>
+							<el-option label="女"
+									   value=0>
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+
+					<el-form-item label="年龄" >
+						<el-input v-model="dataView.age" type="number" autocomplete="off"></el-input>
+					</el-form-item>
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="show = false">取 消</el-button>
+					<el-button type="primary" @click="editData">确 定</el-button>
+				</div>
+			</el-dialog>
+
+			<el-dialog title="病例" :visible.sync="show2">
+				<el-form :model="dataView2">
+					<el-form-item label="姓名" >
+						<el-input :readonly="true" v-model="dataView2.user.realName" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="性别" >
+						<el-input :readonly="true" :value="dataView2.user.sex==1?'男':'女'" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="年龄" >
+						<el-input :readonly="true" v-model="dataView2.user.age" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="预约时间" >
+						<el-input :readonly="true" v-model="dataView2.orderTime" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="诊疗意见" >
+						<el-input :readonly="true"  type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView2.content" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="辅助检查措施" >
+						<el-input :readonly="true"  type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView2.toolCheck" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="危险性评估" >
+						<el-input :readonly="true"  type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView2.dangerCheck" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="是否住院">
+						<el-select :readonly="true"  style="width:100%" v-model="dataView2.stay" clearable filterable placeholder="请选择">
+							<el-option label="不住院"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="住院"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="是否会诊">
+						<el-select :readonly="true"  style="width:100%" v-model="dataView2.mult" clearable filterable placeholder="请选择">
+							<el-option label="否"
+									   value="0">
+							</el-option>
+							<el-option label="是"
+									   value="1">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="是否转院">
+						<el-select :readonly="true"  style="width:100%" v-model="dataView2.move" clearable filterable placeholder="请选择">
+							<el-option label="不转院"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="转院"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item v-if="dataView.move == 1" label="转院备注" >
+						<el-input :readonly="true"  type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView2.moveMemo" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="是否开具处方">
+						<el-select :readonly="true"  style="width:100%" v-model="dataView2.drug" clearable filterable placeholder="请选择">
+							<el-option label="否"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="是"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<div v-if="dataView2.drug==1" class="shadow padding-10 view-shadow">
+						<div class="padding-10 text-blue">处方管理</div>
+
+						<div class="shadow">
+							<div class="text-blue padding-10">药品列表</div>
+							<div class="padding-10" v-for="item in dataView2.drugList" :key="item.id">
+								<span class="padding-10">名称:{{item.drugName}}</span>
+								<span class="padding-10">价格:{{item.price}}元</span>
+							</div>
+						</div>
+
+						<el-form-item v-if="dataView2.drug == 1" label="处方说明" >
+							<el-input :readonly="true"  type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView2.memo" autocomplete="off"></el-input>
+						</el-form-item>
+
+					</div>
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button type="primary" @click="show2 = false">确 定</el-button>
+				</div>
+			</el-dialog>
+
+		</div>
+
+		<script src="../../component/vue/vue.js"></script>
+		<script src="../../component/element-ui/index.js"></script>
+		<script src="../../component/axios/axios.min.js"></script>
+		<script type="module">
+
+			import common from "../../component/common/commonData.js";
+			
+			var app = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						title: "",
+						user:'',
+						userItem:"",
+						orderList:[],
+						userList:[],
+						dataView:{},
+						dataView2:{user:{}},
+						show:false,
+						show2:false
+					};
+				},
+				mounted() {
+
+				},
+				methods: {
+					onShow(){
+						
+					},onLoad(){
+						this.user = common.getUserInfo();
+						if(!this.user){
+							location.href = '/'
+						}
+						this.getUserData();
+					},
+					goBack(){
+						window.location.href='/';
+					},getUserData(){
+						let _this = this;
+						common.request({
+							loading:false,
+							url: common.urlMap.findNmOrderList,
+							data:{
+								creater:this.user.uid,
+								validFlag:1
+							},
+							success: function(res) {
+								if(res.data.code == 200){
+									if(res.data.data){
+										_this.orderList = res.data.data;
+									}
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						})
+
+						common.request({
+							loading:false,
+							url: common.urlMap.findSysUserList,
+							data:{
+								validFlag:1,
+								pid:this.user.uid
+							},
+							success: function(res) {
+								if(res.data.code == 200){
+									if(res.data.data){
+										_this.userList = res.data.data;
+									}
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						})
+					},getUserType(type){
+						switch (type) {
+							case 1:
+								return "管理员";
+								break;
+							case 2:
+								return "医生";
+								break;
+							case 3:
+								return "患者";
+								break;
+						}
+					},getState(type){
+						switch (type) {
+							case 0:
+								return "已挂号";
+								break;
+							case 1:
+								return "问诊结束";
+								break;
+							case 2:
+								return "完成检查";
+							case 3:
+								return "已完成";
+								break;
+						}
+					},listenPage(id){
+						window.location.href="bookItem.html?id="+id;
+					},toManager(){
+						window.location.href="/NmHosp/static/pages/index.html";
+					},toBookManager(){
+						window.location.href="writerBookManager.html";
+					},addData(){
+						this.show = true;
+						this.dataView = {
+							type:4,
+							pid:this.user.uid,
+							validFlag:1
+						}
+					},showData(row) {
+						this.dataView = row;
+						this.show = true;
+					},delData(row) {
+						this.dataView = row;
+						this.dataView["validFlag"] = 0;
+						this.editData();
+					},editData(){
+						let _this = this;
+						if(this.dataView.eid && !this.dataView.validFlag){
+							//删除
+						}else{
+							if(!this.dataView.realName || !this.dataView.sex){
+								common.msg("请填写完整");
+								return;
+							}
+						}
+						let url = _this.dataView.uid ? common.urlMap.editSysUser : common.urlMap.addSysUser;
+						common.request({
+							url: url,
+							data: _this.dataView,
+							success: function(res) {
+								if(res.data.code==200){
+									common.success(res.data.msg)
+									_this.show = false;
+									_this.getUserData();
+								}else{
+									common.err(res.data.msg);
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						})
+
+					},getOrder(id){
+
+						let _this = this;
+						common.request({
+							loading: false,
+							url: common.urlMap.findNmOrderList,
+							data: {
+								validFlag: 1,
+								id: id
+							},
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.data) {
+										_this.dataView2 = res.data.data[0];
+										_this.show2 = true;
+									}
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+
+					}
+				}
+			});
+
+			window.onpageshow = app.onShow();
+			window.onload = app.onLoad();
+
+		</script>
+
+		<style>
+			.main-view {
+				padding: 10px;
+			}
+			.long-text {
+				overflow:hidden;
+				text-overflow:ellipsis;
+				display:-webkit-box;
+				-webkit-box-orient:vertical;
+				-webkit-line-clamp:3;
+				height: 100px;
+				width: 200px;
+			}
+			#mapContainer{
+				 /*地图(容器)显示大小*/
+				 width:800px;
+				 height:400px;
+			 }
+			.el-page-header__content{
+				color: white;
+			}
+		</style>
+	</body>
+
+</html>

@@ -1,0 +1,37 @@
+[{
+		"id": 1,
+		"title": "医院管理",
+		"icon": "layui-icon layui-icon-console",
+		"type": 0,
+		"href": "",
+		"children": [{
+			"id": 17,
+			"title":"医生管理",
+			"icon": "layui-icon layui-icon-console",
+			"type": 1,
+			"openType": "_iframe",
+			"href": "view/manager/userManager.html"
+		},{
+			"id": 10,
+			"title": "药品管理",
+			"icon": "layui-icon layui-icon-console",
+			"type": 1,
+			"openType": "_iframe",
+			"href": "view/manager/drugManager.html"
+		},{
+			"id": 18,
+			"title": "公告管理",
+			"icon": "layui-icon layui-icon-console",
+			"type": 1,
+			"openType": "_iframe",
+			"href": "view/manager/infoSubManager.html"
+		},{
+			"id": 19,
+			"title": "科室管理",
+			"icon": "layui-icon layui-icon-console",
+			"type": 1,
+			"openType": "_iframe",
+			"href": "view/manager/typeManager.html"
+		}]
+	}
+]

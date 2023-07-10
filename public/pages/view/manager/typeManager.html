@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>科室管理</title>
+		<link rel="stylesheet" href="../../component/pear/css/pear.css" />
+		<link rel="stylesheet" href="../../component/element-ui/index.css">
+		<link rel="stylesheet" href="../../component/common/css/nmMain.css">
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="pear-container">
+		<div v-cloak class="layui-card" id="app">
+			<el-container>
+				<el-header class="main-view" height="10vh">
+					<el-form :inline="true"  class="demo-form-inline">
+						<el-form-item label="科室名">
+							<el-select v-model="gid" clearable filterable placeholder="请选择科室">
+								<el-option
+										v-for="item in typeList"
+										:key="item.groupName"
+										:label="item.groupName"
+										:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" @click="onSubmit">查询</el-button>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="success" @click="addData">新增</el-button>
+						</el-form-item>
+					</el-form>
+					
+
+				</el-header>
+				
+				
+				<el-main class="main-view" style="min-height: 87vh;">
+
+					<el-table :stripe="true" :data="tableData" style="width: 100%">
+						<el-table-column prop="id" label="ID" width="80">
+						</el-table-column>
+						<el-table-column prop="groupName" label="科室名" width="150">
+						</el-table-column>
+						<el-table-column prop="createTime" label="添加时间" width="180">
+						</el-table-column>
+						<el-table-column prop="creater" label="添加人">
+						</el-table-column>
+						<el-table-column
+								fixed="right"
+								label="操作"
+								width="200">
+							<template slot-scope="scope">
+								<el-button @click="showData(scope.row)" type="text" size="small">编辑</el-button>
+								<el-button @click="delData(scope.row)" type="text" size="small">删除</el-button>
+							</template>
+						</el-table-column>
+					</el-table>
+					
+				</el-main>
+			</el-container>
+
+
+			<el-dialog title="科室信息" :visible.sync="show">
+				<el-form :model="dataView">
+					<el-form-item label="科室名" label-width="120px">
+						<el-input v-model="dataView.groupName" autocomplete="off"></el-input>
+					</el-form-item>
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="show = false">取 消</el-button>
+					<el-button type="primary" @click="editData">确 定</el-button>
+				</div>
+			</el-dialog>
+
+		</div>
+
+		<script src="../../component/vue/vue.js"></script>
+		<script src="../../component/element-ui/index.js"></script>
+		<script src="../../component/axios/axios.min.js"></script>
+		<!--引入Javascript API GL，参数说明参见下文-->
+		<script src="https://map.qq.com/api/gljs?v=1.exp&key=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77"></script>
+		<script>
+			var map;
+		</script>
+		<script type="module">
+			import common from "../../component/common/commonData.js";
+			
+			var app = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						gid: "",
+						user:'',
+						show:false,
+						dataView:{},
+						tableData: [],
+						userInfo:{},
+						showMapSel:false,
+						selObj:{},
+						selName:"",
+						typeList:[]
+					};
+				},
+				mounted() {
+
+				},
+				methods: {
+					onShow(){
+						
+					},onLoad(){
+						this.user = common.getUserInfo();
+						if(!this.user || this.user.type!=1){
+							location.href = '/'
+						}
+						this.getData();
+					},onSubmit(){
+						this.getData();
+					},getData(){
+						let _this = this;
+						let data = {validFlag:1};
+						if(this.gid){
+							data['id'] = this.gid;
+						}
+						common.request({
+							data: data,
+							url: common.urlMap.findNmHospSubList,
+							success: function(res) {
+								if(res.data.code == 200){
+									if(res.data.code==200){
+										_this.tableData = res.data.data;
+										_this.typeList = res.data.data;
+									}else{
+										common.err(res.data.msg);
+									}
+								}else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						});
+					},showData(row) {
+						this.dataView = row;
+						this.show = true;
+					},delData(row) {
+						this.dataView = row;
+						this.dataView["validFlag"] = 0;
+						this.editData();
+					},editData(){
+						let _this = this;
+						if(this.dataView.id && !this.dataView.validFlag){
+							//删除
+						}else{
+							if(!this.dataView.groupName){
+								common.msg("请填写完整");
+								return;
+							}
+						}
+						let url = _this.dataView.id ? common.urlMap.editNmHospSub : common.urlMap.addNmHospSub;
+						common.request({
+							url: url,
+							data: _this.dataView,
+							success: function(res) {
+								if(res.data.code==200){
+									common.success(res.data.msg)
+									_this.show = false;
+									_this.getData();
+								}else{
+									common.err(res.data.msg);
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						})
+
+					},addData(){
+						this.show = true;
+						this.dataView = {
+							groupName:"",
+						}
+					}
+				}
+			});
+			
+			window.onpageshow = app.onShow();
+			window.onload = app.onLoad();
+		</script>
+		
+		<style>
+			.main-view {
+				padding: 10px;
+			}
+			.long-text {
+				overflow:hidden;
+				text-overflow:ellipsis;
+				display:-webkit-box;
+				-webkit-box-orient:vertical;
+				-webkit-line-clamp:3;
+				height: 100px;
+				width: 250px;
+			}
+			#mapContainer{
+				/*地图(容器)显示大小*/
+				width:800px;
+				height:400px;
+			}
+		</style>
+	</body>
+
+</html>

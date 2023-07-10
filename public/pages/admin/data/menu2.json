@@ -1,0 +1,30 @@
+[{
+	"id": 1,
+	"title": "医生管理",
+	"icon": "layui-icon layui-icon-console",
+	"type": 0,
+	"href": "",
+	"children": [{
+		"id": 21,
+		"title":"患者管理",
+		"icon": "layui-icon layui-icon-console",
+		"type": 1,
+		"openType": "_iframe",
+		"href": "view/manager/orderManager.html"
+	},{
+		"id": 10,
+		"title": "药品管理",
+		"icon": "layui-icon layui-icon-console",
+		"type": 1,
+		"openType": "_iframe",
+		"href": "view/manager/drugManager.html"
+	},{
+		"id": 23,
+		"title": "住院人员",
+		"icon": "layui-icon layui-icon-console",
+		"type": 1,
+		"openType": "_iframe",
+		"href": "view/manager/checkManager.html"
+	}]
+}
+]

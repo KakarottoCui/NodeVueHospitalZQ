@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>留言管理</title>
+		<link rel="stylesheet" href="../../component/pear/css/pear.css" />
+		<link rel="stylesheet" href="../../component/element-ui/index.css">
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="pear-container">
+		<div v-cloak class="layui-card" id="app">
+			<el-container>
+				<el-header class="main-view" height="10vh">
+					<el-form :inline="true"  class="demo-form-inline">
+						<el-form-item label="标题">
+							<el-input v-model="content" placeholder="标题"></el-input>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" @click="onSubmit">查询</el-button>
+						</el-form-item>
+					</el-form>
+					
+
+				</el-header>
+				
+				
+				<el-main class="main-view" style="min-height: 87vh;">
+
+					<el-table :stripe="true" :data="tableData" style="width: 100%">
+						<el-table-column prop="id" label="ID" width="80">
+						</el-table-column>
+						<el-table-column prop="content" label="公告标题" width="220">
+							<template slot-scope="scope">
+								<div class="long-text">{{scope.row.title}}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="content" label="公告内容" width="220">
+							<template slot-scope="scope">
+								<div class="long-text">{{scope.row.content}}</div>
+							</template>
+						</el-table-column>
+
+
+						<el-table-column prop="createTime" label="创建时间" width="180">
+						</el-table-column>
+						<el-table-column prop="creater" label="创建人">
+						</el-table-column>
+						<el-table-column
+								fixed="right"
+								label="操作"
+								width="150">
+							<template slot-scope="scope">
+								<el-button @click="delData(scope.row)" type="text" size="small">删除</el-button>
+							</template>
+						</el-table-column>
+					</el-table>
+					
+				</el-main>
+			</el-container>
+
+			<el-dialog title="帖子" :visible.sync="show">
+				<el-form :model="dataView">
+					<el-form-item label="标题" label-width="120px">
+						<el-input v-model="dataView.title" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="内容" label-width="120px">
+						<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.content" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="标签" label-width="120px">
+						<el-input v-model="dataView.tag" autocomplete="off"  placeholder="以空格分隔标签"></el-input>
+					</el-form-item>
+					<el-form-item label="详情图" label-width="120px">
+						<div style="display: flex;justify-content: space-between;">
+							<div>
+								<el-image :preview-src-list="[getPicUrl(dataView.pic1,1,dataView.pic1Str)]" :src="getPicUrl(dataView.pic1,1,dataView.pic1Str)" style="width: 100px; height: 100px;box-shadow: 1px 1px 5px rgba(0,0,0,0.1)">
+									<div slot="error" class="image-slot">
+										<i class="el-icon-picture-outline"></i>
+									</div>
+								</el-image>
+								<div style="display: flex;justify-content: space-between;">
+									<div style="text-align: center;">主图</div>
+									<div @click="editPic(dataView,1)" style="text-align: center;color: #63a35c;">修改</div>
+								</div>
+
+							</div>
+							<div>
+								<el-image :preview-src-list="[getPicUrl(dataView.pic2,2,dataView.pic2Str)]" :src="getPicUrl(dataView.pic2,2,dataView.pic2Str)"  style=" width: 100px; height: 100px;box-shadow: 1px 1px 5px rgba(0,0,0,0.1)">
+									<div slot="error" class="image-slot">
+										<i class="el-icon-picture-outline"></i>
+									</div>
+								</el-image>
+								<div style="display: flex;justify-content: space-between;">
+									<div style="text-align: center;">详情1</div>
+									<div @click="editPic(dataView,2)" style="text-align: center;color: #63a35c;">修改</div>
+								</div>
+							</div>
+							<div>
+								<el-image :preview-src-list="[getPicUrl(dataView.pic3,3,dataView.pic3Str)]" :src="getPicUrl(dataView.pic3,3,dataView.pic3Str)" style="width: 100px; height: 100px;box-shadow: 1px 1px 5px rgba(0,0,0,0.1)">
+									<div slot="error" class="image-slot">
+										<i class="el-icon-picture-outline"></i>
+									</div>
+								</el-image>
+								<div style="display: flex;justify-content: space-between;">
+									<div style="text-align: center;">详情2</div>
+									<div @click="editPic(dataView,3)" style="text-align: center;color: #63a35c;">修改</div>
+								</div>
+							</div>
+						</div>
+					</el-form-item>
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="show = false">取 消</el-button>
+					<el-button type="primary" @click="editData">确 定</el-button>
+				</div>
+			</el-dialog>
+
+		</div>
+
+		<script src="../../component/vue/vue.js"></script>
+		<script src="../../component/element-ui/index.js"></script>
+		<script src="../../component/axios/axios.min.js"></script>
+		<script type="module">
+			import common from "../../component/common/commonData.js";
+			
+			var app = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						content: "",
+						user:'',
+						show:false,
+						dataView:{},
+						tableData: [],
+						userInfo:{}
+					};
+				},
+				mounted() {
+
+				},
+				methods: {
+					onShow(){
+						
+					},onLoad(){
+						this.user = common.getUserInfo();
+						this.getData();
+					},onSubmit(){
+						this.getData();
+					},getData(){
+						let _this = this;
+						common.request({
+							data: {content:_this.content,validFlag:1},
+							url: common.urlMap.findBusCommentList,
+							success: function(res) {
+								if(res.data.code == 200){
+									if(res.data.code==200){
+										_this.tableData = res.data.data;
+									}else{
+										common.err(res.data.msg);
+									}
+								}else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						});
+					},showData(row) {
+						this.dataView = row;
+						this.show = true;
+					},delData(row) {
+						this.dataView = row;
+						this.dataView["validFlag"] = 0;
+						this.editData();
+					},editData(){
+						let _this = this;
+						let url = _this.dataView.id ? common.urlMap.editBusComment : common.urlMap.addBusComment;
+						common.request({
+							url: url,
+							data: _this.dataView,
+							success: function(res) {
+								if(res.data.code==200){
+									common.success(res.data.msg)
+									_this.show = false;
+									_this.getData();
+								}else{
+									common.err(res.data.msg);
+								}
+							},
+							fail: function(res) {
+								common.err("网络异常");
+							}
+						})
+
+					},addData(){
+						this.show = true;
+						this.dataView = {
+							content:"",
+						}
+					},getPicUrl(info,index,info2) {
+						if(index){
+							let str = this.dataView['pic'+index+'Str'];
+							if(str &&  str.length > 10){
+								return str;
+							}else if(info){
+								return common.urlMap.getPicById + info;
+							}else{
+								return "";
+							}
+						}else{
+							if(info){
+								if( info.length > 10 ){
+									return info;
+								}else {
+									return common.urlMap.getPicById + info;
+								}
+							}else {
+								return "";
+							}
+						}
+					},changeData(data){
+						this.dataView = data;
+						this.dataView.stat = 1;
+						this.editData();
+					},editPic(data,index){
+						this.createInput(index);
+					},createInput(index){
+						let _this = this;
+						var input = document.createElement('input');
+						input.type = 'file';
+						input.setAttribute("accept", "image/*,.png,.jpg,.jpeg,.bmp"); //仅能选择图片
+						input.id = "hidden-input-file";
+						input.style.display = "none";
+						input.onchange = function() {
+							var file = this.files[0];
+							var reader = new FileReader();
+							reader.readAsDataURL(file);
+							reader.onload = function(e) {
+								var data = e.target.result;
+
+								function dealImage(base64, w, size, callback,quality){
+									var newImage = new Image();
+									var picSize = base64.length / 1024;
+									quality = quality || 0.85; //压缩系数0-1之间
+									size = size || 512;
+									//根据图片大小调整压缩比
+									if(picSize<size/3){
+										callback(base64);
+										return;
+									}else if(picSize>6144){
+										quality = 0.7;
+									}
+									newImage.src = base64;
+									newImage.setAttribute("crossOrigin", 'Anonymous'); //url为外域时需要
+									var imgWidth, imgHeight;
+									newImage.onload = function() {
+										imgWidth = this.width;
+										imgHeight = this.height;
+										var canvas = document.createElement("canvas");
+										var ctx = canvas.getContext("2d");
+										if (Math.max(imgWidth, imgHeight) > w) {
+											if (imgWidth > imgHeight) {
+												canvas.width = w;
+												canvas.height = w * imgHeight / imgWidth;
+											} else {
+												canvas.height = w;
+												canvas.width = w * imgWidth / imgHeight;
+											}
+										} else {
+											canvas.width = imgWidth;
+											canvas.height = imgHeight;
+										}
+										ctx.clearRect(0, 0, canvas.width, canvas.height);
+										ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
+										var base64 = canvas.toDataURL("image/jpeg", quality); //绘制压缩,修改格式需注意，png格式不能用此方式压缩
+										// 如想确保图片压缩到自己想要的尺寸,如要求在50-150kb之间，请加以下语句，quality初始值根据情况自定
+										while (base64.length / 1024 > size) {
+											quality -= 0.05;
+											base64 = canvas.toDataURL("image/jpeg", quality);
+										}
+										callback(base64); //必须通过回调函数返回，否则无法及时拿到该值
+									}
+								}
+
+								dealImage(data, 1440, 1560, function(base64) {
+									_this.dataView['pic'+index+'Str'] = base64;
+								})
+
+							};
+						};
+						input.click();
+					}
+				}
+			});
+			
+			window.onpageshow = app.onShow();
+			window.onload = app.onLoad();
+		</script>
+		
+		<style>
+			.main-view {
+				padding: 10px;
+			}
+			.long-text {
+				overflow:hidden;
+				text-overflow:ellipsis;
+				display:-webkit-box;
+				-webkit-box-orient:vertical;
+				-webkit-line-clamp:3;
+				height: 100px;
+				width: 200px;
+			}
+		</style>
+	</body>
+
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>患者管理</title>
+		<link rel="stylesheet" href="../../component/pear/css/pear.css" />
+		<link rel="stylesheet" href="../../component/element-ui/index.css">
+		<link rel="stylesheet" href="../../component/common/css/nmMain.css">
+		<style>
+			[v-cloak]{
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="pear-container">
+		<div v-cloak class="layui-card" id="app">
+			<el-container>
+<!--				<el-header class="main-view" height="10vh">-->
+<!--					<el-form :inline="true"  class="demo-form-inline">-->
+<!--						<el-form-item label="用户名">-->
+<!--							<el-input v-model="name" placeholder="用户名"></el-input>-->
+<!--						</el-form-item>-->
+<!--						<el-form-item>-->
+<!--							<el-button type="primary" @click="onSubmit">查询</el-button>-->
+<!--						</el-form-item>-->
+<!--					</el-form>-->
+<!--					<el-form-item>-->
+<!--						<el-button type="success" @click="addData">新增</el-button>-->
+<!--					</el-form-item>-->
+
+<!--				</el-header>-->
+				
+				
+				<el-main class="main-view" style="min-height: 87vh;">
+
+					<el-table :data="tableData" style="width: 100%">
+						<el-table-column prop="id" label="ID" width="100">
+						</el-table-column>
+						<el-table-column prop="user" label="就诊人姓名" width="100">
+							<template slot-scope="scope">
+								<div>{{scope.row.user.realName }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="user" label="性别" width="50">
+							<template slot-scope="scope">
+								<div>{{scope.row.user.sex == 1 ?'男':'女' }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="age" label="年龄" width="50">
+							<template slot-scope="scope">
+								<div>{{scope.row.user.age }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="subId" label="挂号科室" width="80">
+							<template slot-scope="scope">
+								<div>{{ scope.row.nmHospSub.groupName}}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="state" label="状态" width="80">
+							<template slot-scope="scope">
+								<div>{{ getState(scope.row.state) }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="stay" label="是否住院" width="80">
+							<template slot-scope="scope">
+								<div>{{ scope.row.stay == 1 ?'住院':'不住院' }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="content" label="诊疗意见" width="200">
+							<template slot-scope="scope">
+								<div>{{ scope.row.content }}</div>
+							</template>
+						</el-table-column>
+						<el-table-column prop="orderTime" label="预约时间" width="150">
+
+						</el-table-column>
+
+						<el-table-column
+								fixed="right"
+								label="操作"
+								width="250">
+							<template slot-scope="scope">
+								<el-button @click="showData(scope.row)" type="text" size="small">处置</el-button>
+								<el-button v-if="scope.row.state!=3" @click="delData(scope.row)" type="text" size="small">结束诊疗</el-button>
+							</template>
+						</el-table-column>
+					</el-table>
+					
+				</el-main>
+			</el-container>
+
+			<el-dialog title="病例维护" :visible.sync="show">
+				<el-form :model="dataView">
+					<el-form-item label="姓名" >
+						<el-input :readonly="true" v-model="dataView.user.realName" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="性别" >
+						<el-input :readonly="true" :value="dataView.user.sex==1?'男':'女'" autocomplete="off"></el-input>
+					</el-form-item>
+					<el-form-item label="年龄" >
+						<el-input :readonly="true" v-model="dataView.user.age" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="预约时间" >
+						<el-input :readonly="true" v-model="dataView.orderTime" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="诊疗意见" >
+						<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.content" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="辅助检查措施" >
+						<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.toolCheck" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="危险性评估" >
+						<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.dangerCheck" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="是否住院">
+						<el-select style="width:100%" v-model="dataView.stay" clearable filterable placeholder="请选择">
+							<el-option label="不住院"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="住院"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="是否会诊">
+						<el-select style="width:100%" v-model="dataView.mult" clearable filterable placeholder="请选择">
+							<el-option label="否"
+									   value="0">
+							</el-option>
+							<el-option label="是"
+									   value="1">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item label="是否转院">
+						<el-select style="width:100%" v-model="dataView.move" clearable filterable placeholder="请选择">
+							<el-option label="不转院"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="转院"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<el-form-item v-if="dataView.move == 1" label="转院备注" >
+						<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.moveMemo" autocomplete="off"></el-input>
+					</el-form-item>
+
+					<el-form-item label="是否开具处方">
+						<el-select style="width:100%" v-model="dataView.drug" clearable filterable placeholder="请选择">
+							<el-option label="否"
+									   :value="parseInt('0')">
+							</el-option>
+							<el-option label="是"
+									   :value="parseInt('1')">
+							</el-option>
+						</el-select>
+					</el-form-item>
+
+					<div v-if="dataView.drug==1" class="shadow padding-10 view-shadow">
+						<div class="padding-10 text-blue">处方管理</div>
+						<div class="v-flex">
+							<el-select v-model="drugId" clearable filterable placeholder="请选择药品">
+								<el-option
+										v-for="item in drugList"
+										:key="item.id"
+										:label="item.drugName+'('+item.price+'元)'"
+										:value="parseInt(item.id)">
+								</el-option>
+							</el-select>
+							<el-button style="height: 40px;margin-left: 20px;" type="primary" @click="addDrug(drugId)" size="small">添加药品</el-button>
+						</div>
+
+						<div class="shadow">
+							<div class="text-blue padding-10">药品列表</div>
+							<div class="padding-10" v-for="item in dataView.drugList" :key="item.id">
+								<span class="padding-10">名称:{{item.drugName}}</span>
+								<span class="padding-10">价格:{{item.price}}元</span>
+								<span @click="delDrug(item)" class="padding-10">删除</span>
+							</div>
+						</div>
+
+						<el-form-item v-if="dataView.drug == 1" label="处方说明" >
+							<el-input type="textarea" :autosize="{ minRows: 3, maxRows: 6}" v-model="dataView.memo" autocomplete="off"></el-input>
+						</el-form-item>
+
+					</div>
+
+
+
+
+
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="show = false">取 消</el-button>
+					<el-button type="primary" @click="editData">确 定</el-button>
+				</div>
+			</el-dialog>
+
+		</div>
+
+		<script src="../../component/vue/vue.js"></script>
+		<script src="../../component/element-ui/index.js"></script>
+		<script src="../../component/axios/axios.min.js"></script>
+		<script type="module">
+			import common from "../../component/common/commonData.js";
+
+			var app = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						drugId:'',
+						name: "",
+						show:false,
+						drugList:[],
+						dataView:{user:{}},
+						tableData: [],
+						userInfo:{},
+						typeList:[],
+						value1: [new Date(2023, 0, 0, 23, 59), new Date(2023, 0, 0, 23, 59)]
+					};
+				},
+				mounted() {
+
+				},
+				methods: {
+					onShow() {
+
+					}, onLoad() {
+						this.user = common.getUserInfo();
+						if (!this.user) {
+							location.href = '/'
+						}
+						this.getData();
+						this.getSubList();
+						this.getDrugList();
+					}, onSubmit() {
+
+						this.getData();
+
+					},getDrugList(){
+						let _this = this;
+						common.request({
+							data: {validFlag:1},
+							url: common.urlMap.findNmDrugList,
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.code == 200) {
+										_this.drugList = res.data.data;
+									} else {
+										common.err(res.data.msg);
+									}
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						});
+
+					}, getData() {
+
+						let _this = this;
+						common.request({
+							loading: false,
+							url: common.urlMap.findNmOrderList,
+							data: {
+								validFlag: 1,
+								docId: this.user.uid
+							},
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.data) {
+										_this.tableData = res.data.data;
+
+									}
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+
+					}, getSubList() {
+						var _this = this;
+						common.request({
+							data: {validFlag:1},
+							url: common.urlMap.findNmHospSubList,
+							success: function (res) {
+								if (res.data.code == 200) {
+									if (res.data.code == 200) {
+										_this.typeList = res.data.data;
+									} else {
+										common.err(res.data.msg);
+									}
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						});
+
+					}, editData() {
+						let _this = this;
+						if (this.dataView.id) {
+							if(this.dataView.state==0){
+								this.dataView.state = 1;
+							}
+						} else {
+							this.dataView.state = 1;
+						}
+						let url = _this.dataView.id ? common.urlMap.editNmOrder : common.urlMap.addNmOrder;
+						common.request({
+							url: url,
+							data: _this.dataView,
+							success: function (res) {
+								if (res.data.code == 200) {
+									common.success(res.data.msg)
+									_this.show = false;
+									_this.getData();
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+
+					}, showData(row) {
+						this.dataView = row;
+						this.show = true;
+					}, delData(row) {
+						this.dataView = row;
+						this.dataView["state"] = 3;
+						this.editData();
+					},addData(){
+						this.show = true;
+						this.dataView = {
+							type:2,
+						}
+
+					},getState(type){
+						switch (type) {
+							case 0:
+								return "已挂号";
+								break;
+							case 1:
+								return "问诊结束";
+								break;
+							case 2:
+								return "完成检查";
+							case 3:
+								return "已完成";
+								break;
+						}
+					},addDrug(id){
+						var _this = this;
+						var drug = {};
+						this.drugList.map(function(item){
+							if(item.id == id){
+								drug = item;
+							}
+						});
+						common.request({
+							url: common.urlMap.addNmRxItem,
+							data: {
+								drugId:drug.id,
+								orderId:this.dataView.id,
+								price:drug.price
+							},
+							success: function (res) {
+								if (res.data.code == 200) {
+									common.success(res.data.msg)
+									drug['rxId'] = res.data.data.id;
+									_this.dataView.drugList.push(drug);
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+					},delDrug(item){
+						var _this = this;
+						common.request({
+							url: common.urlMap.editNmRxItem,
+							data: {
+								id:item.rxId,
+								validFlag:0
+							},
+							success: function (res) {
+								if (res.data.code == 200) {
+									common.success(res.data.msg);
+
+									for(var i=0;i<_this.dataView.drugList.length;i++){
+										if(item.rxId == _this.dataView.drugList[i].rxId){
+											_this.dataView.drugList.splice(i, 1);
+										}
+									}
+								} else {
+									common.err(res.data.msg);
+								}
+							},
+							fail: function (res) {
+								common.err("网络异常");
+							}
+						})
+					}
+				}
+			});
+
+			window.onpageshow = app.onShow();
+			window.onload = app.onLoad();
+			Date.prototype.Format =  function (fmt) {  // author: meizz
+				var o = {
+					"M+":  this.getMonth() + 1,  // 月份
+					"d+":  this.getDate(),  // 日
+					"h+":  this.getHours(),  // 小时
+					"m+":  this.getMinutes(),  // 分
+					"s+":  this.getSeconds(),  // 秒
+					"q+": Math.floor(( this.getMonth() + 3) / 3),  // 季度
+					"S":  this.getMilliseconds()  // 毫秒
+				};
+				if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, ( this.getFullYear() + "").substr(4 - RegExp.$1.length));
+				for ( var k  in o)
+					if ( new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+				return fmt;
+			}
+
+		</script>
+
+		<style>
+			.main-view {
+				padding: 10px;
+			}
+		</style>
+	</body>
+
+</html>
