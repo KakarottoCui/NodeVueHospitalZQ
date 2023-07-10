@@ -17,6 +17,8 @@
 
 用到的技术：
 
-后台 node.js
+后端 node.js
 
-前台 Vue3
+前端 Vue3
+
+Java SpringBoot后端版本链接：https://github.com/KakarottoCui/SpringBootVueHospitalZQ
