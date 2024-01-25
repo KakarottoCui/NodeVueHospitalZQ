@@ -1,7 +1,7 @@
 # NodeVueHospitalZQ
 基于node.js和Vue3的医院信息管理挂号系统
 
-演示视频链接：https://live.csdn.net/v/310535
+演示视频链接：https://live.csdn.net/v/361431
 
 详询 微信1：egvh56ufy7hh ，微信2：dabocode ，钉钉：chengxuyuandabo ，QQ：821898835 。承接商业项目、课设、毕设和论文，包括但不限于Web、APP、小程序等，课设、毕设提供远程部署和不限次数代码解答！
 
@@ -17,8 +17,8 @@
 
 用到的技术：
 
-后端 node.js
+后端 node.js，MySQL数据库等
 
-前端 Vue3
+前端 Vue3，ElementUI等
 
-Java SpringBoot后端版本链接：https://github.com/KakarottoCui/SpringBootVueHospitalZQ
+使用Java SpringBoot作为后端的版本链接：https://github.com/KakarottoCui/SpringBootVueHospitalZQ
